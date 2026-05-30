@@ -78,6 +78,34 @@ const WALL_TEX = SCHEMES.map(wallTex);
 const DOOR_TEX = doorTex();
 const EXIT_TEX = exitTex();
 
+/* ---- swap in real CC0 PS1 textures (Miziziziz collection) once they load ----
+   These overwrite the procedural canvases in place, so the renderer (which
+   holds references to them) upgrades live. The procedural versions act as the
+   fallback until the images arrive, and on any environment without Image. */
+function overwriteTex(canvas, url, relight) {
+  if (typeof Image === 'undefined') return;
+  const img = new Image();
+  img.onload = () => {
+    const x = canvas.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.clearRect(0, 0, canvas.width, canvas.height);
+    x.drawImage(img, 0, 0, canvas.width, canvas.height);
+    if (relight) { // re-apply the floor-shadow so lighting still reads
+      const g = x.createLinearGradient(0, canvas.height, 0, canvas.height * 0.4);
+      g.addColorStop(0, 'rgba(0,0,0,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+  img.onerror = () => {}; // keep procedural fallback
+  img.src = url;
+}
+const TEXDIR = 'assets/textures/';
+overwriteTex(WALL_TEX[0], TEXDIR + 'BRICK_3A.png', true);
+overwriteTex(WALL_TEX[1], TEXDIR + 'CONCRETE_1A.png', true);
+overwriteTex(WALL_TEX[2], TEXDIR + 'BRICK_1A.png', true);
+overwriteTex(WALL_TEX[3], TEXDIR + 'CONCRETE_2A.png', true);
+overwriteTex(DOOR_TEX, TEXDIR + 'DOOR_1A.png', false);
+
 /* ---- sprites (transparent backgrounds) ---- */
 function nunSprite() {
   const c = mk(64, 128), x = c.getContext('2d');
