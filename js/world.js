@@ -94,9 +94,9 @@ function generateProps() {
   props = [];
   blocked = new Uint8Array(N * N);
 
-  function place(tx, ty, type, solid, hide) {
+  function place(tx, ty, type, solid, hide, search) {
     if (solid) blocked[ty * N + tx] = 1;
-    props.push({ x: tx + 0.5, y: ty + 0.5, tx, ty, type, solid, hide });
+    props.push({ x: tx + 0.5, y: ty + 0.5, tx, ty, type, solid, hide, search, searched: false, contains: null });
   }
 
   for (let ry = 0; ry < RY; ry++) for (let rx = 0; rx < RX; rx++) {
@@ -118,14 +118,17 @@ function generateProps() {
 
     if (theme === 'bedroom') {
       if (spots[pick]) { const [x, y] = next(); place(x, y, 'bed', true, true); }
-      if (spots[pick]) { const [x, y] = next(); place(x, y, 'wardrobe', true, true); }
-      if (spots[pick] && Math.random() < 0.6) { const [x, y] = next(); place(x, y, 'candle', false, false); }
+      if (spots[pick]) { const [x, y] = next(); place(x, y, 'dresser', true, false, true); }
+      if (spots[pick] && Math.random() < 0.5) { const [x, y] = next(); place(x, y, 'wardrobe', true, true); }
+      if (spots[pick] && Math.random() < 0.5) { const [x, y] = next(); place(x, y, 'candle', false, false); }
     } else if (theme === 'dining') {
       if (spots[pick]) { const [x, y] = next(); place(x, y, 'table', true, false); }
       if (spots[pick]) { const [x, y] = next(); place(x, y, 'chair', true, false); }
-      if (spots[pick] && Math.random() < 0.7) { const [x, y] = next(); place(x, y, 'candle', false, false); }
+      if (spots[pick]) { const [x, y] = next(); place(x, y, 'dresser', true, false, true); }
+      if (spots[pick] && Math.random() < 0.6) { const [x, y] = next(); place(x, y, 'candle', false, false); }
     } else if (theme === 'study') {
       if (spots[pick]) { const [x, y] = next(); place(x, y, 'table', true, false); }
+      if (spots[pick]) { const [x, y] = next(); place(x, y, 'dresser', true, false, true); }
       if (spots[pick]) { const [x, y] = next(); place(x, y, 'wardrobe', true, true); }
       if (spots[pick] && Math.random() < 0.5) { const [x, y] = next(); place(x, y, 'candle', false, false); }
     } else if (theme === 'chapel') {
@@ -150,8 +153,24 @@ function generateProps() {
     if (x === cx || y === cy) continue;
     if (blocked[y * N + x]) continue;
     blocked[y * N + x] = 1;
-    props.push({ x: x + 0.5, y: y + 0.5, tx: x, ty: y, type: 'wardrobe', solid: true, hide: true });
+    props.push({ x: x + 0.5, y: y + 0.5, tx: x, ty: y, type: 'wardrobe', solid: true, hide: true, search: false, searched: false, contains: null });
     hides++;
+  }
+
+  // guarantee enough searchable dressers for the keys (and red herrings)
+  let dressers = props.filter(p => p.search).length;
+  safety = 0;
+  while (dressers < 9 && safety++ < 80) {
+    const rx = (Math.random() * RX) | 0, ry = (Math.random() * RY) | 0;
+    if (rx === 0 && ry === 0) continue;
+    const r = roomTiles(rx, ry);
+    const cx = r.x0 + (ROOM >> 1), cy = r.y0 + (ROOM >> 1);
+    const x = r.x0 + (Math.random() * ROOM | 0), y = r.y0 + (Math.random() * ROOM | 0);
+    if (x === cx || y === cy) continue;
+    if (blocked[y * N + x]) continue;
+    blocked[y * N + x] = 1;
+    props.push({ x: x + 0.5, y: y + 0.5, tx: x, ty: y, type: 'dresser', solid: true, hide: false, search: true, searched: false, contains: null });
+    dressers++;
   }
 }
 

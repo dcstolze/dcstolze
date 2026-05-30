@@ -77,6 +77,7 @@ function sfxStep()  { noiseBurst(0.09, 0.12, 'lowpass', 420); }
 function sfxKey()   { noiseBurst(0.18, 0.25, 'highpass', 2600); tone('triangle', 640, 640, 0.5, 0.18); tone('triangle', 880, 880, 0.6, 0.13, AC && AC.currentTime + 0.08); }
 function sfxNote()  { noiseBurst(0.12, 0.16, 'highpass', 2200); }
 function sfxDoor()  { noiseBurst(0.5, 0.22, 'bandpass', 300, 2); tone('sawtooth', 180, 70, 0.5, 0.06); }
+function sfxDrawer(){ noiseBurst(0.35, 0.28, 'lowpass', 700); tone('sawtooth', 140, 90, 0.35, 0.07); }
 function sfxLocked(){ noiseBurst(0.12, 0.2, 'lowpass', 180); tone('square', 90, 60, 0.18, 0.12); }
 function sfxScream(){ if (!AC) return; const t = AC.currentTime; noiseBurst(1.3, 0.8, 'bandpass', 1500, 0.7); tone('sawtooth', 950, 70, 1.2, 0.5, t); tone('square', 600, 90, 1.0, 0.25, t + 0.05); }
 function sfxWin()   { if (!AC) return; const t = AC.currentTime; [392, 494, 587, 784, 988].forEach((f, i) => tone('sine', f, f, 0.9, 0.22, t + i * 0.16)); }

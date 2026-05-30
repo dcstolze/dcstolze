@@ -50,13 +50,15 @@ const SIZES = {
   chair:    { v: 0.82, h: 0.5,  ho: 0 },
   candle:   { v: 0.55, h: 0.3,  ho: 0, glow: true },
   altar:    { v: 1.75, h: 0.85, ho: 0 },
+  dresser:      { v: 0.85, h: 0.95, ho: 0 },
+  dresser_open: { v: 0.85, h: 0.95, ho: 0 },
 };
 function sprFor(type) {
   if (type === 'nun') return NUN_SPR;
   if (type === 'key') return KEY_SPR;
   if (type === 'note') return NOTE_SPR;
   if (type === 'battery') return BATTERY_SPR;
-  return PROP_SPR[type];
+  return PROP_SPR[type] || NOTE_SPR;
 }
 
 /* ---------- state ---------- */
@@ -66,7 +68,8 @@ let items = [];
 let exit = { x: 0, y: 0 };
 const enemy = { x: 0, y: 0, state: 'patrol', path: [], target: null, repath: 0, chase: 0, speed: 1.5, nearness: 0, lastKnown: null, searchT: 0 };
 
-let hidden = false, hideSpot = null, nearHide = null;
+let hidden = false, hideSpot = null, nearHide = null, nearSearch = null;
+let actionKind = null, actionTarget = null;
 let climax = false;             // triggered when all keys are found
 let flashOn = true, battery = 1; // flashlight & its charge
 let state = 'title';
@@ -88,7 +91,7 @@ function updateHud() {
 function updateObjective() {
   objEl.innerHTML = climax || keysHave >= KEYS_NEEDED
     ? 'ESCAPE — THE FRONT DOOR'
-    : 'FIND THE THREE KEYS (' + keysHave + '/3)';
+    : 'SEARCH THE DRAWERS — ' + keysHave + '/3 KEYS';
 }
 
 /* ---------- new game ---------- */
@@ -104,22 +107,28 @@ function setup() {
   const ey = sr.y0 + (ROOM >> 1);
   map[ey][0] = 9; exit = { x: 0.5, y: ey + 0.5 };
 
-  // keys go in the three rooms farthest from spawn
+  // hide the keys (and other loot) INSIDE dressers — you have to ransack the
+  // house drawer by drawer. Keys go in the dressers farthest from spawn.
   const dist = reachableRooms(0, 0);
-  const rooms = [];
-  for (const k in dist) { const [rx, ry] = k.split(',').map(Number); if (!(rx === 0 && ry === 0)) rooms.push({ rx, ry, d: dist[k] }); }
-  rooms.sort((a, b) => b.d - a.d);
-  for (let i = 0; i < KEYS_NEEDED && i < rooms.length; i++) {
-    const c = roomCenter(rooms[i].rx, rooms[i].ry);
-    items.push({ x: c.x + 0.5, y: c.y + 0.5, type: 'key', got: false });
+  function roomDist(p) { const rx = (p.tx / P) | 0, ry = (p.ty / P) | 0; return dist[rx + ',' + ry] != null ? dist[rx + ',' + ry] : 0; }
+  const dressers = props.filter(p => p.search);
+  dressers.sort((a, b) => roomDist(b) - roomDist(a));
+  // farthest 3 -> keys
+  for (let i = 0; i < KEYS_NEEDED && i < dressers.length; i++) dressers[i].contains = 'key';
+  // sprinkle the rest with batteries, notes, and empties
+  let ni = 0;
+  for (let i = KEYS_NEEDED; i < dressers.length; i++) {
+    const r = Math.random();
+    if (r < 0.34) dressers[i].contains = 'battery';
+    else if (r < 0.62) { dressers[i].contains = 'note'; dressers[i].note = NOTES[ni++ % NOTES.length]; }
+    // else stays empty (null)
   }
-  // scatter lore notes in some of the middle rooms
-  const mid = rooms.slice(KEYS_NEEDED);
-  const noteRooms = mid.filter((_, i) => i % 2 === 0).slice(0, 6);
-  noteRooms.forEach((r, i) => { const c = roomCenter(r.rx, r.ry); items.push({ x: c.x + 0.5, y: c.y - 0.3, type: 'note', got: false, text: NOTES[i % NOTES.length] }); });
-  // spare batteries for the flashlight, spread across the house
-  const battRooms = mid.filter((_, i) => i % 2 === 1).slice(0, 5);
-  battRooms.forEach(r => { const c = roomCenter(r.rx, r.ry); items.push({ x: c.x - 0.4, y: c.y + 0.4, type: 'battery', got: false }); });
+  // a couple of visible spare batteries on the floor too, so the dark is survivable
+  const mid = [];
+  for (const k in dist) { const [rx, ry] = k.split(',').map(Number); if (!(rx === 0 && ry === 0)) mid.push({ rx, ry, d: dist[k] }); }
+  mid.sort((a, b) => a.d - b.d);
+  mid.filter((_, i) => i % 3 === 1).slice(0, 2).forEach(r => { const c = roomCenter(r.rx, r.ry); items.push({ x: c.x - 0.4, y: c.y + 0.4, type: 'battery', got: false }); });
+  const rooms = mid.slice().sort((a, b) => b.d - a.d);
 
   // Sister starts far away
   const far = rooms[Math.min(2, rooms.length - 1)];
@@ -178,16 +187,44 @@ function enterHide(spot) {
 }
 function leaveHide() { hidden = false; hideSpot = null; }
 
+/* searching dressers for the keys (and other loot) */
+function findNearSearch() {
+  let best = null, bd = 1.4;
+  for (const p of props) {
+    if (!p.search || p.searched) continue;
+    const d = Math.hypot(p.x - player.x, p.y - player.y);
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+const EMPTY_LINES = ["Old rags and dust.", "Empty. Just moth-eaten linen.", "Nothing but yellowed paper.", "A dead mouse. Nothing else."];
+function searchContainer(p) {
+  p.searched = true; sfxDrawer();
+  if (Math.hypot(enemy.x - player.x, enemy.y - player.y) < 6) enemy.lastKnown = { x: player.x | 0, y: player.y | 0 }; // the noise carries
+  if (p.contains === 'key') {
+    keysHave++; sfxKey(); updateHud(); updateObjective(); vhsGlitch(0.4);
+    if (keysHave >= KEYS_NEEDED) triggerClimax();
+    else toast("Buried in the drawer — an iron key. (" + keysHave + "/3)");
+  } else if (p.contains === 'battery') {
+    battery = Math.min(1, battery + 0.35); toast("A pack of batteries in the drawer.");
+  } else if (p.contains === 'note') {
+    sfxNote(); toast(p.note || NOTES[0]);
+  } else {
+    toast(EMPTY_LINES[(Math.random() * EMPTY_LINES.length) | 0]);
+  }
+}
+
 /* ---------- update ---------- */
 function update(dt) {
   playTime += dt;
   if (playTime > vhsGlitchUntil) vhsEl.classList.remove('glitch');
 
-  // consume HIDE button
+  // consume the contextual ACTION button (decided last frame)
   if (hideToggle) {
     hideToggle = false;
     if (hidden) leaveHide();
-    else if (nearHide) enterHide(nearHide);
+    else if (actionKind === 'search' && actionTarget && !actionTarget.searched) searchContainer(actionTarget);
+    else if (actionKind === 'hide' && actionTarget) enterHide(actionTarget);
   }
   // consume FLASH button (can't switch on with a dead battery)
   if (flashToggle) {
@@ -229,11 +266,22 @@ function update(dt) {
 
   lockMsgT -= dt; toastT -= dt; if (toastT <= 0) toastEl.classList.remove('show');
 
-  // hide button visibility
+  // contextual action button: pick the nearest of search/hide, but favour
+  // hiding when she's actively hunting you (you want to vanish, not rummage)
+  nearSearch = hidden ? null : findNearSearch();
   nearHide = hidden ? null : findNearHide();
-  const showHide = hidden || !!nearHide;
-  hideBtn.classList.toggle('hidden', !showHide || state !== 'play');
-  hideBtn.textContent = hidden ? 'LEAVE' : 'HIDE';
+  actionKind = null; actionTarget = null;
+  if (!hidden) {
+    const ds = nearSearch ? Math.hypot(nearSearch.x - player.x, nearSearch.y - player.y) : Infinity;
+    const dh = nearHide ? Math.hypot(nearHide.x - player.x, nearHide.y - player.y) : Infinity;
+    const threatened = enemy.state === 'chase' || enemy.nearness > 0.5;
+    if (nearHide && (threatened || dh <= ds)) { actionKind = 'hide'; actionTarget = nearHide; }
+    else if (nearSearch) { actionKind = 'search'; actionTarget = nearSearch; }
+    else if (nearHide) { actionKind = 'hide'; actionTarget = nearHide; }
+  }
+  const showBtn = hidden || !!actionTarget;
+  hideBtn.classList.toggle('hidden', !showBtn || state !== 'play');
+  hideBtn.textContent = hidden ? 'LEAVE' : (actionKind === 'search' ? 'SEARCH' : 'HIDE');
 
   updateEnemy(dt);
 
@@ -454,7 +502,7 @@ function render() {
 
   // sprites: furniture + items + Sister, sorted far -> near
   const sprs = [];
-  for (const p of props) sprs.push({ x: p.x, y: p.y, type: p.type });
+  for (const p of props) sprs.push({ x: p.x, y: p.y, type: (p.search && p.searched) ? 'dresser_open' : p.type });
   for (const it of items) if (!it.got) sprs.push({ x: it.x, y: it.y, type: it.type });
   sprs.push({ x: enemy.x, y: enemy.y, type: 'nun' });
   for (const s of sprs) s._d = (s.x - player.x) ** 2 + (s.y - player.y) ** 2;

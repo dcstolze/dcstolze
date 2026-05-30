@@ -262,6 +262,31 @@ function altarSprite() {
   x.fillStyle = '#ffcf6a'; x.beginPath(); x.ellipse(14, 53, 1.6, 4, 0, 0, 7); x.ellipse(34, 53, 1.6, 4, 0, 0, 7); x.fill();
   return c;
 }
+function dresserSprite(open) {
+  const c = mk(56, 60), x = c.getContext('2d');
+  x.fillStyle = '#34230f'; x.fillRect(6, 8, 44, 50);          // carcass
+  x.fillStyle = '#241710'; x.fillRect(6, 8, 44, 50);
+  x.fillStyle = '#3c2817';
+  // three drawers
+  for (let i = 0; i < 3; i++) {
+    const dy = 12 + i * 15;
+    if (open && i === 0) {
+      // top drawer pulled out: dark cavity + the drawer front lower/forward
+      x.fillStyle = '#0c0805'; x.fillRect(9, dy, 38, 13);
+      x.fillStyle = '#5a3a1c'; x.fillRect(4, dy + 18, 48, 9); // protruding drawer
+      x.fillStyle = '#c9a14a'; x.beginPath(); x.arc(20, dy + 22, 1.6, 0, 7); x.arc(36, dy + 22, 1.6, 0, 7); x.fill();
+    } else {
+      x.fillStyle = '#3c2817'; x.fillRect(9, dy, 38, 12);
+      x.strokeStyle = '#1c130a'; x.lineWidth = 1; x.strokeRect(9, dy, 38, 12);
+      x.fillStyle = '#c9a14a'; x.beginPath(); x.arc(20, dy + 6, 1.8, 0, 7); x.arc(36, dy + 6, 1.8, 0, 7); x.fill();
+    }
+  }
+  // grain
+  x.strokeStyle = 'rgba(0,0,0,0.2)'; x.lineWidth = 1;
+  for (let i = 8; i < 50; i += 5) { x.beginPath(); x.moveTo(i, 8); x.lineTo(i, 58); x.stroke(); }
+  return c;
+}
+
 const PROP_SPR = {
   wardrobe: wardrobeSprite(),
   bed: bedSprite(),
@@ -269,4 +294,6 @@ const PROP_SPR = {
   chair: chairSprite(),
   candle: candleSprite(),
   altar: altarSprite(),
+  dresser: dresserSprite(false),
+  dresser_open: dresserSprite(true),
 };
