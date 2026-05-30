@@ -189,9 +189,11 @@ function batterySprite() {
   return c;
 }
 const NUN_SPR = nunSprite(), KEY_SPR = keySprite(), NOTE_SPR = noteSprite(), BATTERY_SPR = batterySprite();
+const NUN_FACE = nunSprite(); // jumpscare close-up (procedural fallback until the render loads)
 
-// swap the procedural Sister for the digitized CC0 character once it loads
+// swap the procedural Sister for the 3D-rendered CC0 character once it loads
 overwriteSprite(NUN_SPR, 'assets/characters/sister.png');
+overwriteSprite(NUN_FACE, 'assets/characters/sister_face.png');
 
 /* ---- furniture / props (billboards) ---- */
 function wardrobeSprite() {

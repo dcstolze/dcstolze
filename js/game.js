@@ -40,7 +40,7 @@ const KEYS_NEEDED = 3;
 
 // billboard sizing per sprite type: v=height(tiles) h=width(tiles) ho=hover
 const SIZES = {
-  nun:      { v: 2.25, h: 1.05, ho: 0 },
+  nun:      { v: 2.2, h: 1.04, ho: 0 },
   key:      { v: 0.5,  h: 0.34, ho: 0.35 },
   note:     { v: 0.5,  h: 0.34, ho: 0.30 },
   battery:  { v: 0.45, h: 0.30, ho: 0.32 },
@@ -573,8 +573,8 @@ function jumpscare(done) {
     x.fillStyle = '#000'; x.fillRect(0, 0, W, H);
     refreshNoise(); x.globalAlpha = 0.4; x.drawImage(noise, 0, 0, W, H); x.globalAlpha = 1;
     const sc = 0.5 + f / dur * 2.0, jx = (Math.random() - 0.5) * 22, jy = (Math.random() - 0.5) * 22;
-    const h = Math.min(W, H) * 1.5 * sc, w = h * (NUN_SPR.width / NUN_SPR.height);
-    x.drawImage(NUN_SPR, W / 2 - w / 2 + jx, H / 2 - h * 0.42 + jy, w, h);
+    const h = Math.min(W, H) * 1.7 * sc, w = h * (NUN_FACE.width / NUN_FACE.height);
+    x.drawImage(NUN_FACE, W / 2 - w / 2 + jx, H / 2 - h * 0.4 + jy, w, h);
     x.fillStyle = 'rgba(120,0,0,' + (0.15 + 0.25 * Math.random()) + ')'; x.fillRect(0, 0, W, H);
     if (f < dur) requestAnimationFrame(fr);
     else setTimeout(() => { jc.classList.add('hidden'); done(); }, 130);
