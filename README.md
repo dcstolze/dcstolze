@@ -5,6 +5,11 @@ Puppet Combo's *Nun Massacre*. You're locked inside a dark mansion with a
 relentless habited killer. Find the **three iron keys**, reach the **front
 door**, and get out — without being caught.
 
+> **Two versions in this repo:**
+> - `index3d.html` — the **3D** version (three.js, real first-person 3D with a
+>   PS1/VHS look). This is the current direction.
+> - `index.html` — the original **2D raycaster** version (fully playable).
+
 Built to run entirely in a phone browser. No build step, no servers, no
 external assets: every texture and sound is generated procedurally at runtime,
 so it works fully offline.
