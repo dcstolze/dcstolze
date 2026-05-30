@@ -14,6 +14,13 @@ anyway, with thanks).
 Files used: `BRICK_3A`, `BRICK_1A`, `CONCRETE_1A`, `CONCRETE_2A`, `FLOOR_1A`,
 `DOOR_1A`.
 
+## Character — `assets/characters/sister.png`
+The Sister's face and gown are composited from the **CC0** `Characters/Killer`
+texture atlas (`Killer.png`, `Machete.png`) in the same
+[`M3-org/retro3d-assets`](https://github.com/M3-org/retro3d-assets) collection,
+draped in a procedurally-drawn nun's habit/wimple to fit the theme. CC0 / Public
+Domain.
+
 ## Fonts — `assets/fonts/`
 Self-hosted from Google Fonts so the game works offline:
 - **Nosifer** — title display face (SIL Open Font License 1.1)
