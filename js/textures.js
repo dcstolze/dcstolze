@@ -106,6 +106,22 @@ overwriteTex(WALL_TEX[2], TEXDIR + 'BRICK_1A.png', true);
 overwriteTex(WALL_TEX[3], TEXDIR + 'CONCRETE_2A.png', true);
 overwriteTex(DOOR_TEX, TEXDIR + 'DOOR_1A.png', false);
 
+/* the Sister herself: a digitized character composited from the CC0 atlas,
+   loaded over the procedural sprite (and resized to keep her detail). */
+function overwriteSprite(canvas, url) {
+  if (typeof Image === 'undefined') return;
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.width; canvas.height = img.height;
+    const x = canvas.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.clearRect(0, 0, canvas.width, canvas.height);
+    x.drawImage(img, 0, 0);
+  };
+  img.onerror = () => {};
+  img.src = url;
+}
+
 /* ---- sprites (transparent backgrounds) ---- */
 function nunSprite() {
   const c = mk(64, 128), x = c.getContext('2d');
@@ -173,6 +189,9 @@ function batterySprite() {
   return c;
 }
 const NUN_SPR = nunSprite(), KEY_SPR = keySprite(), NOTE_SPR = noteSprite(), BATTERY_SPR = batterySprite();
+
+// swap the procedural Sister for the digitized CC0 character once it loads
+overwriteSprite(NUN_SPR, 'assets/characters/sister.png');
 
 /* ---- furniture / props (billboards) ---- */
 function wardrobeSprite() {
