@@ -17,6 +17,15 @@
     font-size:clamp(14px,4vw,18px); letter-spacing:3px; z-index:7; box-shadow:0 0 18px rgba(150,130,0,0.25);
   }
   #actBtn:active { transform:translateX(-50%) scale(0.95); }
+  /* second meter (stamina) sits just above the battery */
+  #stamWrap { position:fixed; left:16px; bottom:42px; width:34vw; max-width:170px; height:6px;
+    background:rgba(20,16,14,0.6); border:1px solid #3a322a; border-radius:4px; z-index:6; pointer-events:none; }
+  #stam { height:100%; width:100%; border-radius:3px; background:linear-gradient(90deg,#5a6a2c,#9ad04a); transition:width .12s; }
+  /* hiding: looking out through a wardrobe slit */
+  #hideMask { position:fixed; inset:0; z-index:5; pointer-events:none; display:none; }
+  #hideMask.on { display:block; }
+  #hideMask::before, #hideMask::after { content:''; position:fixed; left:0; right:0; height:34vh; background:#000; }
+  #hideMask::before { top:0; } #hideMask::after { bottom:0; }
 </style>
 </head>
 <body>
@@ -35,7 +44,9 @@
     <div id="toast"></div>
   </div>
 
+  <div id="hideMask"></div>
   <div id="battWrap" class="hidden"><div id="batt"></div></div>
+  <div id="stamWrap" class="hidden"><div id="stam"></div></div>
   <div id="runBtn" class="hidden">RUN</div>
   <div id="flashBtn" class="hidden">LIGHT</div>
   <div id="actBtn" class="hidden">SEARCH</div>
