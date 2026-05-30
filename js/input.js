@@ -12,9 +12,11 @@ const moveV = { x: 0, y: 0, active: false, ox: 0, oy: 0 };
 let moveId = null, lookId = null, lastLookX = 0, lastLookY = 0;
 let running = false;
 let hideToggle = false;   // one-shot: set by the HIDE button, consumed by the game loop
+let flashToggle = false;  // one-shot: set by the FLASH button
 const keys = {};
 
 function requestHide() { hideToggle = true; }
+function requestFlash() { flashToggle = true; }
 
 function onStart(id, x, y) {
   if (x < W * 0.5 && moveId === null) {
@@ -79,6 +81,15 @@ function initInput() {
   const hideBtn = document.getElementById('hideBtn');
   ['touchstart', 'mousedown'].forEach(ev => hideBtn.addEventListener(ev, e => { e.preventDefault(); requestHide(); hideBtn.classList.add('act'); }, { passive: false }));
   ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev => hideBtn.addEventListener(ev, () => hideBtn.classList.remove('act')));
-  // keyboard: E to hide/peek out
-  window.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'e') requestHide(); });
+  // FLASH button (tap to toggle the flashlight)
+  const flashBtn = document.getElementById('flashBtn');
+  ['touchstart', 'mousedown'].forEach(ev => flashBtn.addEventListener(ev, e => { e.preventDefault(); requestFlash(); flashBtn.classList.add('act'); }, { passive: false }));
+  ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(ev => flashBtn.addEventListener(ev, () => flashBtn.classList.remove('act')));
+
+  // keyboard: E to hide/peek out, F to toggle flashlight
+  window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'e') requestHide();
+    if (k === 'f') requestFlash();
+  });
 }

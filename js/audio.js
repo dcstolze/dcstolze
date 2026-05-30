@@ -5,7 +5,7 @@
    constantly; stings/heartbeat/scream are generated on demand.
    ============================================================ */
 
-let AC = null, master = null, droneGain = null;
+let AC = null, master = null, droneGain = null, chaseGain = null;
 
 function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
@@ -25,6 +25,26 @@ function initAudio() {
   const lfo = AC.createOscillator(); lfo.frequency.value = 0.11;
   const lg = AC.createGain(); lg.gain.value = 7;
   lfo.connect(lg); lg.connect(o.frequency); lfo.start();
+
+  // dissonant chase layer — swells while she hunts you (gain driven from the game)
+  chaseGain = AC.createGain(); chaseGain.gain.value = 0; chaseGain.connect(master);
+  const cfilt = AC.createBiquadFilter(); cfilt.type = 'lowpass'; cfilt.frequency.value = 900;
+  cfilt.connect(chaseGain);
+  [110, 116.5, 220].forEach((f, i) => {       // minor-second cluster = unease
+    const co = AC.createOscillator(); co.type = i === 2 ? 'square' : 'sawtooth'; co.frequency.value = f;
+    const cg = AC.createGain(); cg.gain.value = i === 2 ? 0.18 : 0.5;
+    co.connect(cg); cg.connect(cfilt); co.start();
+  });
+  // throb
+  const throb = AC.createOscillator(); throb.type = 'sine'; throb.frequency.value = 4.5;
+  const tg = AC.createGain(); tg.gain.value = 0.5;
+  throb.connect(tg); tg.connect(chaseGain.gain); throb.start();
+}
+
+// level 0..1 — how intense the chase music should be right now
+function setChaseAudio(level) {
+  if (!AC || !chaseGain) return;
+  chaseGain.gain.setTargetAtTime(0.16 * level, AC.currentTime, 0.25);
 }
 
 function tone(type, f0, f1, dur, vol, t0) {

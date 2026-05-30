@@ -43,6 +43,7 @@ const SIZES = {
   nun:      { v: 2.25, h: 1.05, ho: 0 },
   key:      { v: 0.5,  h: 0.34, ho: 0.35 },
   note:     { v: 0.5,  h: 0.34, ho: 0.30 },
+  battery:  { v: 0.45, h: 0.30, ho: 0.32 },
   wardrobe: { v: 1.7,  h: 0.92, ho: 0 },
   bed:      { v: 0.7,  h: 1.30, ho: 0 },
   table:    { v: 0.66, h: 0.95, ho: 0 },
@@ -54,6 +55,7 @@ function sprFor(type) {
   if (type === 'nun') return NUN_SPR;
   if (type === 'key') return KEY_SPR;
   if (type === 'note') return NOTE_SPR;
+  if (type === 'battery') return BATTERY_SPR;
   return PROP_SPR[type];
 }
 
@@ -66,11 +68,14 @@ const enemy = { x: 0, y: 0, state: 'patrol', path: [], target: null, repath: 0, 
 
 let hidden = false, hideSpot = null, nearHide = null;
 let climax = false;             // triggered when all keys are found
+let flashOn = true, battery = 1; // flashlight & its charge
 let state = 'title';
 let last = 0, raf = 0;
 let stamina = 1;
 let stepT = 0, heartT = 0, lockMsgT = 0, toastT = 0, bellT = 8, stalkT = 6;
 let noiseTog = 0;
+let playTime = 0, glitchT = 0, vhsGlitchUntil = 0;
+const vhsEl = document.getElementById('vhs');
 
 const toastEl = document.getElementById('toast');
 const objEl = document.getElementById('obj');
@@ -92,6 +97,7 @@ function setup() {
   const spawn = roomCenter(0, 0);
   player.x = spawn.x + 0.5; player.y = spawn.y + 0.5; player.ang = Math.PI / 4; player.pitch = 0;
   keysHave = 0; items = []; hidden = false; hideSpot = null; climax = false;
+  flashOn = true; battery = 1; playTime = 0; glitchT = 2 + Math.random() * 4; vhsGlitchUntil = 0;
 
   // locked front door on the outer (west) wall of the spawn room
   const sr = roomTiles(0, 0);
@@ -108,8 +114,12 @@ function setup() {
     items.push({ x: c.x + 0.5, y: c.y + 0.5, type: 'key', got: false });
   }
   // scatter lore notes in some of the middle rooms
-  const noteRooms = rooms.slice(KEYS_NEEDED).filter((_, i) => i % 2 === 0).slice(0, 6);
+  const mid = rooms.slice(KEYS_NEEDED);
+  const noteRooms = mid.filter((_, i) => i % 2 === 0).slice(0, 6);
   noteRooms.forEach((r, i) => { const c = roomCenter(r.rx, r.ry); items.push({ x: c.x + 0.5, y: c.y - 0.3, type: 'note', got: false, text: NOTES[i % NOTES.length] }); });
+  // spare batteries for the flashlight, spread across the house
+  const battRooms = mid.filter((_, i) => i % 2 === 1).slice(0, 5);
+  battRooms.forEach(r => { const c = roomCenter(r.rx, r.ry); items.push({ x: c.x - 0.4, y: c.y + 0.4, type: 'battery', got: false }); });
 
   // Sister starts far away
   const far = rooms[Math.min(2, rooms.length - 1)];
@@ -170,11 +180,26 @@ function leaveHide() { hidden = false; hideSpot = null; }
 
 /* ---------- update ---------- */
 function update(dt) {
+  playTime += dt;
+  if (playTime > vhsGlitchUntil) vhsEl.classList.remove('glitch');
+
   // consume HIDE button
   if (hideToggle) {
     hideToggle = false;
     if (hidden) leaveHide();
     else if (nearHide) enterHide(nearHide);
+  }
+  // consume FLASH button (can't switch on with a dead battery)
+  if (flashToggle) {
+    flashToggle = false;
+    if (flashOn) { flashOn = false; toast("You kill the light. The dark presses in."); }
+    else if (battery > 0.001) { flashOn = true; toast("The flashlight flickers back on."); }
+    else toast("The battery is dead.");
+  }
+  // flashlight drains while lit
+  if (flashOn && battery > 0) {
+    battery = Math.max(0, battery - dt / 75);
+    if (battery === 0) { flashOn = false; toast("The flashlight dies. Find batteries."); vhsGlitch(0.6); }
   }
 
   if (!hidden) doMovement(dt);
@@ -186,9 +211,12 @@ function update(dt) {
       if (Math.hypot(it.x - player.x, it.y - player.y) < 0.55) {
         it.got = true;
         if (it.type === 'key') {
-          keysHave++; sfxKey(); updateHud(); updateObjective();
+          keysHave++; sfxKey(); updateHud(); updateObjective(); vhsGlitch(0.4);
           if (keysHave >= KEYS_NEEDED) triggerClimax();
           else toast("An iron key, cold and heavy. (" + keysHave + "/3)");
+        } else if (it.type === 'battery') {
+          battery = Math.min(1, battery + 0.35); sfxKey();
+          toast("Spare batteries. The light steadies.");
         } else { sfxNote(); toast(it.text); }
       }
     }
@@ -211,6 +239,28 @@ function update(dt) {
 
   bellT -= dt;
   if (bellT <= 0) { if (enemy.nearness > 0.22 || climax) sfxBell(); bellT = 6 + Math.random() * 7; }
+
+  // chase music swells with the hunt
+  let chaseLvl = 0;
+  if (climax) chaseLvl = 1;
+  else if (enemy.state === 'chase') chaseLvl = Math.min(1, 0.5 + enemy.nearness * 0.6);
+  else if (enemy.state === 'investigate') chaseLvl = 0.18;
+  setChaseAudio(hidden ? chaseLvl * 0.3 : chaseLvl);
+
+  // VHS timecode + occasional tape glitch (more often when she's near)
+  updateTimecode();
+  glitchT -= dt;
+  if (glitchT <= 0) { vhsGlitch(0.5); glitchT = (climax ? 1.5 : 4) + Math.random() * (4 - enemy.nearness * 3); }
+}
+
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function updateTimecode() {
+  const t = playTime | 0;
+  document.getElementById('tc').textContent = pad((t / 3600) | 0) + ':' + pad(((t / 60) | 0) % 60) + ':' + pad(t % 60);
+}
+function vhsGlitch(dur) {
+  vhsEl.classList.remove('glitch'); void vhsEl.offsetWidth; // restart the CSS animation
+  vhsEl.classList.add('glitch'); vhsGlitchUntil = playTime + (dur || 0.5);
 }
 
 function doMovement(dt) {
@@ -341,6 +391,10 @@ function refreshNoise() {
 function render() {
   const horizon = (bufH * 0.5 + player.pitch) | 0;
 
+  // flashlight reach: bright when lit, near-blind in the dark; flickers when low
+  let curFog = (flashOn && battery > 0) ? FOG : 2.4;
+  if (flashOn && battery > 0 && battery < 0.18 && Math.random() < 0.25) curFog *= 0.5; // dying-battery flicker
+
   // ceiling
   let g = bx.createLinearGradient(0, 0, 0, Math.max(1, horizon));
   g.addColorStop(0, '#070709'); g.addColorStop(1, '#0c0c10');
@@ -391,7 +445,7 @@ function render() {
     const sh = drawEnd - drawStart;
     if (sh > 0) {
       bx.drawImage(tex, texX, 0, 1, TEXH, x, drawStart, 1, sh);
-      let fog = Math.min(0.94, perp / FOG);
+      let fog = Math.min(0.94, perp / curFog);
       if (side === 1) fog = Math.min(0.96, fog + 0.18);
       if (tile === 9) { bx.fillStyle = climax ? 'rgba(200,120,40,0.32)' : 'rgba(120,70,30,0.18)'; bx.fillRect(x, ds, 1, de - ds); }
       bx.fillStyle = 'rgba(2,1,0,' + fog + ')'; bx.fillRect(x, ds, 1, de - ds);
@@ -422,7 +476,7 @@ function render() {
     const startX = (screenX - sW / 2) | 0, endX = (screenX + sW / 2) | 0;
     if (endX <= startX) continue;
 
-    const fog = Math.min(0.92, ty / FOG);
+    const fog = Math.min(0.92, ty / curFog);
     let alpha = Math.max(0, 1 - fog);
     if (s.type === 'key' || s.type === 'note') alpha *= 0.6 + 0.4 * Math.sin(performance.now() / 250 + s.x);
     if (sz.glow) { bx.globalCompositeOperation = 'lighter'; alpha = Math.max(0.25, 1 - fog * 0.6) * (0.8 + 0.2 * Math.sin(performance.now() / 90 + s.x)); }
@@ -463,6 +517,9 @@ function render() {
   document.body.classList.toggle('shake', enemy.nearness > 0.8 && !hidden);
 
   document.getElementById('stam').style.width = (stamina * 100) + '%';
+  const battEl = document.getElementById('batt');
+  battEl.style.width = (battery * 100) + '%';
+  battEl.classList.toggle('low', battery < 0.25);
 }
 
 /* ---------- loop ---------- */
@@ -475,8 +532,11 @@ function loop(now) {
 function showHud(v) {
   document.getElementById('hud').classList.toggle('hidden', !v);
   document.getElementById('stamWrap').classList.toggle('hidden', !v);
+  document.getElementById('battWrap').classList.toggle('hidden', !v);
   document.getElementById('runBtn').classList.toggle('hidden', !v);
-  if (!v) hideBtn.classList.add('hidden');
+  document.getElementById('flashBtn').classList.toggle('hidden', !v);
+  vhsEl.classList.toggle('hidden', !v);
+  if (!v) { hideBtn.classList.add('hidden'); setChaseAudio(0); }
 }
 
 function startGame() {

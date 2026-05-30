@@ -65,6 +65,44 @@ html, body {
 }
 #hideBtn.act { background:rgba(60,90,30,0.7); transform:translateX(-50%) scale(0.95); }
 
+#flashBtn {
+  position:fixed; right:5vw; bottom:30vh;
+  width:17vw; max-width:88px; height:17vw; max-height:88px;
+  border-radius:50%; border:2px solid #4a4420; background:rgba(40,36,14,0.5);
+  color:#d8cf9a; font-size:clamp(11px,3vw,14px); letter-spacing:1px; z-index:7;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 0 16px rgba(150,130,0,0.25);
+}
+#flashBtn.act { background:rgba(120,100,20,0.6); transform:scale(0.94); }
+
+/* battery meter (mirrors stamina, on the right) */
+#battWrap {
+  position:fixed; left:16px; bottom:30px; width:34vw; max-width:170px; height:8px;
+  background:rgba(20,20,26,0.6); border:1px solid #2a3340; border-radius:4px;
+  z-index:6; pointer-events:none;
+}
+#batt {
+  height:100%; width:100%; border-radius:3px;
+  background:linear-gradient(90deg,#2a6a8a,#7ad0ff); transition:width .2s;
+}
+#batt.low { background:linear-gradient(90deg,#7a2c2c,#d8b24a); }
+
+/* ---- VHS camcorder overlay ---- */
+#vhs { position:fixed; inset:0; z-index:5; pointer-events:none; }
+#scan { position:absolute; inset:0;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+  mix-blend-mode:multiply; opacity:0.5;
+}
+#rec { position:absolute; top:14px; right:16px; color:#e8e2d2; letter-spacing:2px;
+  font-size:clamp(13px,3.6vw,17px); text-shadow:0 0 6px #000; }
+#rec .dot { color:#ff2a2a; animation:recblink 1.2s steps(1) infinite; }
+@keyframes recblink { 0%,50%{opacity:1} 51%,100%{opacity:0.1} }
+#track { position:absolute; left:0; right:0; height:14vh; top:-20vh;
+  background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0) 100%);
+  filter:blur(1px); opacity:0; }
+#vhs.glitch #track { animation:tracking 0.5s linear; }
+@keyframes tracking { 0%{top:-20vh;opacity:0.0} 20%{opacity:0.7} 100%{top:120vh;opacity:0} }
+#vhs.glitch #scan { transform:translateX(2px); }
+
 /* overlay screens */
 .scr {
   position:fixed; inset:0; z-index:20; display:flex; flex-direction:column;

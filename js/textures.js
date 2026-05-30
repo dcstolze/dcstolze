@@ -130,7 +130,21 @@ function noteSprite() {
   x.fillStyle = '#9a917e'; for (let i = 0; i < 5; i++) x.fillRect(10, 9 + i * 5, 12, 1);
   return c;
 }
-const NUN_SPR = nunSprite(), KEY_SPR = keySprite(), NOTE_SPR = noteSprite();
+function batterySprite() {
+  const c = mk(32, 40), x = c.getContext('2d');
+  // soft glow so it's findable in the dark
+  const g = x.createRadialGradient(16, 20, 1, 16, 20, 16);
+  g.addColorStop(0, 'rgba(120,200,255,0.5)'); g.addColorStop(1, 'rgba(80,160,255,0)');
+  x.fillStyle = g; x.beginPath(); x.arc(16, 20, 16, 0, 7); x.fill();
+  // body
+  x.fillStyle = '#1c2630'; x.fillRect(10, 8, 12, 26);
+  x.fillStyle = '#cf3a2a'; x.fillRect(10, 8, 12, 9);     // red top band
+  x.fillStyle = '#d8b24a'; x.fillRect(13, 5, 6, 3);      // terminal
+  // "+" / "-"
+  x.fillStyle = '#e6e1d2'; x.fillRect(13, 24, 6, 1.5); x.fillRect(15.5, 21.5, 1.5, 6);
+  return c;
+}
+const NUN_SPR = nunSprite(), KEY_SPR = keySprite(), NOTE_SPR = noteSprite(), BATTERY_SPR = batterySprite();
 
 /* ---- furniture / props (billboards) ---- */
 function wardrobeSprite() {
