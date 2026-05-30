@@ -40,7 +40,7 @@ const KEYS_NEEDED = 3;
 
 // billboard sizing per sprite type: v=height(tiles) h=width(tiles) ho=hover
 const SIZES = {
-  nun:      { v: 2.2, h: 1.04, ho: 0 },
+  nun:      { v: 2.05, h: 0.72, ho: 0 },
   key:      { v: 0.5,  h: 0.34, ho: 0.35 },
   note:     { v: 0.5,  h: 0.34, ho: 0.30 },
   battery:  { v: 0.45, h: 0.30, ho: 0.32 },

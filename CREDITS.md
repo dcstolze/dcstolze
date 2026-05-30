@@ -15,16 +15,17 @@ Files used: `BRICK_3A`, `BRICK_1A`, `CONCRETE_1A`, `CONCRETE_2A`, `FLOOR_1A`,
 `DOOR_1A`.
 
 ## Character — `assets/characters/sister.png`, `sister_face.png`
-The Sister is the **CC0** `Characters/Killer` 3D model (`Killer.fbx` +
-`Killer.png`) from
-[`M3-org/retro3d-assets`](https://github.com/M3-org/retro3d-assets),
-**rendered to sprites here** with three.js + headless-gl under Xvfb: the Mixamo
-rig was posed out of its T-pose into a stalking stance and captured as a
-full-body billboard plus a head close-up for the jumpscare. CC0 / Public Domain.
+The Sister is the **"Horror Ghost Character - Blood Stained Spirit"** 3D model,
+**rendered to sprites here** with three.js + headless-gl under Xvfb (front-facing
+full-body billboard + a head close-up for the jumpscare). The source `.gltf`
+ships in `horror_ghost_character_-_blood_stained_spirit.zip`.
 
-> Note: Sketchfab was requested but is blocked by this environment's network
-> allowlist (every Sketchfab endpoint returns 403), so the character was sourced
-> from a reachable CC0 GitHub mirror instead.
+**License: CC-BY-4.0 — attribution required. Required credit:**
+
+> This work is based on "Horror Ghost Character - Blood Stained Spirit"
+> (https://sketchfab.com/3d-models/horror-ghost-character-blood-stained-spirit-ed1a90be19404450935720f7abaae471)
+> by adhamasalah (https://sketchfab.com/adhamAsalah)
+> licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
 
 ## Build-time tooling (not shipped)
 `three`, `three-stdlib`, `gl` (headless-gl), `canvas`, `jsdom` are dev-only
