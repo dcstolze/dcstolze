@@ -23,10 +23,10 @@ function resize() {
 
 /* ---------- scene ---------- */
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x05060a, 0.085);
+scene.fog = new THREE.FogExp2(0x05060a, 0.11);
 const camera = new THREE.PerspectiveCamera(74, 1, 0.05, 100);
-scene.add(new THREE.AmbientLight(0x223044, 0.22));
-const flash = new THREE.SpotLight(0xfff2d6, 7.0, 24, Math.PI / 5, 0.55, 1.1);
+scene.add(new THREE.AmbientLight(0x1a2230, 0.12));
+const flash = new THREE.SpotLight(0xffe8c4, 2.6, 20, Math.PI / 5.5, 0.6, 1.3);
 const flashTarget = new THREE.Object3D();
 scene.add(flash, flashTarget); flash.target = flashTarget;
 const world = new THREE.Group(); scene.add(world);
@@ -163,7 +163,7 @@ function update(dt) {
   // flashlight battery + flicker
   if (flashOn && !hidden) battery = Math.max(0, battery - dt / 80);
   if (battery <= 0) flashOn = false;
-  let fi = (flashOn && !hidden) ? 7.0 : 0.0;
+  let fi = (flashOn && !hidden) ? 2.6 : 0.0;
   if (fi > 0) { if (battery < 0.18 && Math.random() < 0.3) fi *= 0.35; fi *= 0.92 + Math.random() * 0.16 + enemy.nearness * 0.0; }
   flash.intensity = fi;
 
@@ -234,7 +234,7 @@ function updateEnemy(dt) {
   else { enemy.chase -= dt; if (enemy.chase > 0) enemy.state = 'chase'; else if (enemy.heard) enemy.state = 'investigate'; else enemy.state = 'patrol'; }
 
   let goal;
-  if (enemy.state === 'chase') { goal = (see ? { gx: pgx, gy: pgy } : (enemy.heard || { gx: pgx, gy: pgy })); enemy.speed = 2.9; }
+  if (enemy.state === 'chase') { goal = (see ? { gx: pgx, gy: pgy } : (enemy.heard || { gx: pgx, gy: pgy })); enemy.speed = 3.2; }
   else if (enemy.state === 'investigate') {
     goal = enemy.heard; enemy.speed = 2.4;
     if (Math.hypot((goal.gx + 0.5) * T - enemy.x, (goal.gy + 0.5) * T - enemy.z) < 0.6 * T) enemy.heard = null;
@@ -248,7 +248,11 @@ function updateEnemy(dt) {
   }
   enemy.repath -= dt;
   if (enemy.repath <= 0 || enemy.path.length === 0) { enemy.path = W.findPath(map, blocked, egx, egy, goal.gx, goal.gy); enemy.repath = enemy.state === 'chase' ? 0.3 : 0.6; }
-  if (enemy.path.length) {
+  if (enemy.state === 'chase' && dist < 2.4 * T) {
+    // final lunge — home directly on the player, not just the tile centre
+    let ex = player.x - enemy.x, ez = player.z - enemy.z, d = Math.hypot(ex, ez) || 1; const step = enemy.speed * dt;
+    enemy.x += ex / d * step; enemy.z += ez / d * step; enemy.path = [];
+  } else if (enemy.path.length) {
     const [nx, ny] = enemy.path[0], cx = nx * T + T / 2, cz = ny * T + T / 2;
     let ex = cx - enemy.x, ez = cz - enemy.z, d = Math.hypot(ex, ez) || 1; const step = enemy.speed * dt;
     enemy.x += ex / d * step; enemy.z += ez / d * step;
@@ -264,7 +268,7 @@ function updateEnemy(dt) {
   A.setChaseAudio(hidden ? cl * 0.3 : cl);
 
   document.body.classList.toggle('shake', dist < 3.5 && !hidden);
-  if (!hidden && dist < 1.3) die();
+  if (!hidden && dist < 1.7) die();
 }
 
 /* ---------- ui ---------- */
