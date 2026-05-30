@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#000000" />
+<title>SISTER — Don't Let Her Find You</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="vig"></div>
+  <div id="redveil"></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="obj">FIND THE THREE KEYS</div>
+    <div id="keys"><span class="kslot" data-i="0">✚</span><span class="kslot" data-i="1">✚</span><span class="kslot" data-i="2">✚</span></div>
+    <div id="toast"></div>
+  </div>
+
+  <!-- on-screen controls -->
+  <div id="stamWrap" class="hidden"><div id="stam"></div></div>
+  <div id="runBtn" class="hidden">RUN</div>
+  <div id="hideBtn" class="hidden">HIDE</div>
+
+  <!-- TITLE -->
+  <div id="title" class="scr">
+    <h1>SISTER</h1>
+    <p class="sub">
+      The doors locked behind you. The house is breathing.<br><br>
+      Somewhere in these rooms are <b>three iron keys</b>.<br>
+      Find them. Reach the <b>front door</b>. Get out.<br><br>
+      <i>She is already awake. Don't let her find you.</i>
+    </p>
+    <button class="btn" id="startBtn">GO INSIDE</button>
+    <div class="tip">
+      LEFT side: drag to move &nbsp;·&nbsp; RIGHT side: drag to look<br>
+      Hold RUN to sprint (but running is loud) &nbsp;·&nbsp; walk into doors to open them<br>
+      Near a wardrobe or bed, tap HIDE to climb in and hold your breath<br>
+      headphones on · lights off
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="over" class="scr hidden">
+    <h1 id="overTitle">SHE FOUND YOU</h1>
+    <p class="sub" id="overMsg"></p>
+    <button class="btn" id="retryBtn">AGAIN</button>
+  </div>
+
+  <!-- JUMPSCARE -->
+  <div id="jump" class="hidden"><canvas id="jumpCanvas"></canvas></div>
+
+  <script src="js/textures.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
