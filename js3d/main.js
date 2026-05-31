@@ -2,6 +2,7 @@
 import * as THREE from '../assets/vendor/three.module.js';
 import * as W from './world3d.js';
 import * as A from './audio.js';
+import * as F from './farm.js';
 
 const { N, P, T, WALL_H } = W;
 const KEYS_NEEDED = 3;
@@ -30,6 +31,9 @@ const flash = new THREE.SpotLight(0xffe8c4, 2.6, 20, Math.PI / 5.5, 0.6, 1.3);
 const flashTarget = new THREE.Object3D();
 scene.add(flash, flashTarget); flash.target = flashTarget;
 const world = new THREE.Group(); scene.add(world);
+// moonlight for the outdoor farm phase (toggled off indoors)
+const moon = new THREE.DirectionalLight(0xaec4e8, 0.0); moon.position.set(-8, 14, 6); scene.add(moon);
+const farmAmb = new THREE.AmbientLight(0x3a4663, 0.0); scene.add(farmAmb);
 
 /* ---------- state ---------- */
 let map, blocked = new Set(), doors = {};
@@ -134,6 +138,58 @@ function tryMove(nx, nz) {
   const gx = tile(player.x), gy0 = tile(nz);
   if (map[gy0] && map[gy0][gx] === 2) openDoorAt(gx, gy0);
   if (walkable(gx, gy0)) player.z = nz;
+}
+
+/* ---------- farm phase (walk to the house) ---------- */
+let farmPrompted = false;
+function updateFarm(dt) {
+  playTime += dt;
+  let ix = mv.x, iy = mv.y;
+  if (keys['w']) iy = -1; if (keys['s']) iy = 1; if (keys['a']) ix = -1; if (keys['d']) ix = 1;
+  const moving = Math.abs(ix) + Math.abs(iy) > 0.12;
+  const wantRun = (running || keys['shift']) && moving && stamina > 0.02;
+  if (wantRun) stamina = Math.max(0, stamina - dt * 0.42); else stamina = Math.min(1, stamina + dt * 0.28);
+  const sp = (wantRun ? 4.6 : 3.1) * dt;
+  if (moving) {
+    const s = Math.sin(player.yaw), c = Math.cos(player.yaw);
+    let vx = (-s) * (-iy) + c * ix, vz = (-c) * (-iy) + (-s) * ix;
+    const m = Math.hypot(vx, vz) || 1; vx /= m; vz /= m;
+    const mag = Math.min(1, Math.hypot(ix, iy));
+    F.moveFarm(player, player.x + vx * sp * mag, player.z + vz * sp * mag);
+    walkPhase += dt * (wantRun ? 13 : 9);
+    stepT -= dt * (wantRun ? 1.7 : 1);
+    if (stepT <= 0) { A.sfxStep(wantRun); stepT = 0.42; }
+  }
+  // flashlight works outdoors too
+  if (flashOn) battery = Math.max(0, battery - dt / 120);
+  if (battery <= 0) flashOn = false;
+  let fi = flashOn ? 2.6 : 0.0; if (fi > 0) fi *= 0.92 + Math.random() * 0.16;
+  flash.intensity = fi;
+
+  const bob = moving ? Math.sin(walkPhase) * 0.05 : 0;
+  const camY = F.farm.eye + bob;
+  camera.position.set(player.x, camY, player.z);
+  const dirX = -Math.sin(player.yaw) * Math.cos(player.pitch), dirY = Math.sin(player.pitch), dirZ = -Math.cos(player.yaw) * Math.cos(player.pitch);
+  camera.lookAt(player.x + dirX, camY + dirY, player.z + dirZ);
+  flash.position.copy(camera.position);
+  flashTarget.position.set(player.x + dirX * 6, camY + dirY * 6, player.z + dirZ * 6);
+
+  F.tickMarker(playTime);
+  const d = F.distToHouse(player);
+  const ab = document.getElementById('actBtn');
+  const atDoor = d < F.farm.enterDist;
+  ab.classList.toggle('hidden', !atDoor);
+  ab.textContent = 'GO IN';
+  if (!farmPrompted && d < F.farm.radius * 0.55) { farmPrompted = true; toast('The farmhouse door hangs open ahead.'); }
+  if (atDoor && actReq) { actReq = false; enterHouse(); return; }
+  if (atDoor) document.getElementById('obj').textContent = 'TAP "GO IN" TO ENTER';
+  else document.getElementById('obj').textContent = 'REACH THE FARMHOUSE';
+
+  glitchT -= dt; if (glitchT <= 0) { vhsGlitch(); glitchT = 5 + Math.random() * 4; }
+  toastT -= dt; if (toastT <= 0) document.getElementById('toast').classList.remove('show');
+  document.getElementById('batt').style.width = (battery * 100) + '%';
+  document.getElementById('stam').style.width = (stamina * 100) + '%';
+  document.getElementById('tc').textContent = fmt(playTime);
 }
 
 /* ---------- update ---------- */
@@ -281,38 +337,52 @@ function vhsGlitch() { vhsEl.classList.remove('glitch'); void vhsEl.offsetWidth;
 /* ---------- loop ---------- */
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (state === 'play') { update(dt); renderer.render(scene, camera); }
+  if (state === 'farm') { updateFarm(dt); renderer.render(scene, camera); }
+  else if (state === 'play') { update(dt); renderer.render(scene, camera); }
   requestAnimationFrame(loop);
 }
 
 /* ---------- flow ---------- */
 function show(id, v) { const e = document.getElementById(id); if (e) e.classList.toggle('hidden', !v); }
 
-/* opening cutscene: you arrive at the farm, then step into the house */
-const INTRO = [
-  "Three weeks since your sister's last call.",
-  "Hollow Farm — the end of the dirt road.",
-  "Every window is black. The front door stands open.",
-  "You step inside…"
-];
-let introI = 0, introBound = false;
-function playIntro() {
-  introI = 0;
-  const el = document.getElementById('intro');
-  document.getElementById('introText').textContent = INTRO[0];
-  const bg = document.getElementById('introBg');
-  if (bg) { bg.style.animation = 'none'; void bg.offsetWidth; bg.style.animation = ''; }
-  el.classList.remove('hidden');
-  if (!introBound) {
-    introBound = true;
-    el.addEventListener('click', () => {
-      introI++;
-      if (introI >= INTRO.length) { el.classList.add('hidden'); startGame(); }
-      else document.getElementById('introText').textContent = INTRO[introI];
-    });
+/* ---------- the farm: you spawn here and walk to the house ---------- */
+let farmLoaded = false;
+async function startFarm() {
+  A.initAudio();
+  document.getElementById('introText').textContent = 'Arriving at Hollow Farm…';
+  document.getElementById('intro').classList.remove('hidden');
+  // ensure the house grid is hidden while outdoors
+  world.visible = false; if (enemy.spr) enemy.spr.visible = false;
+  try {
+    if (!farmLoaded) {
+      await F.loadFarm(scene, (p) => { document.getElementById('introText').textContent = 'Arriving at Hollow Farm… ' + Math.round(p * 100) + '%'; });
+      farmLoaded = true;
+    }
+    F.farm.group.visible = true;
+  } catch (e) {
+    // if the model fails, don't strand the player — go straight inside
+    document.getElementById('intro').classList.add('hidden');
+    return startGame();
   }
+  // outdoor lighting on, indoor flashlight available
+  moon.intensity = 0.9; farmAmb.intensity = 0.7; scene.fog = new THREE.FogExp2(0x0a0e18, 0.022);
+  keysHave = 0; battery = 1; flashOn = true; stamina = 1; hidden = false; playTime = 0; farmPrompted = false;
+  F.spawn(player);
+  state = 'farm';
+  ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true));
+  document.getElementById('intro').classList.add('hidden');
+  last = performance.now();
 }
-function startGame() { A.initAudio(); buildLevel(); state = 'play'; ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true)); last = performance.now(); }
+
+function enterHouse() {
+  toast('You step through the doorway.'); A.sfxDoor();
+  if (F.farm.group) F.farm.group.visible = false;
+  moon.intensity = 0; farmAmb.intensity = 0; scene.fog = new THREE.FogExp2(0x05060a, 0.11);
+  world.visible = true;
+  startGame();
+}
+
+function startGame() { A.initAudio(); buildLevel(); if (enemy.spr) enemy.spr.visible = true; state = 'play'; ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true)); last = performance.now(); }
 function hudOff() { ['hud', 'battWrap', 'stamWrap', 'runBtn', 'flashBtn', 'actBtn'].forEach(i => show(i, false)); A.setChaseAudio(0); document.body.classList.remove('shake'); }
 function win() { state = 'over'; hudOff(); A.sfxWin(); const t = document.getElementById('overTitle'); t.textContent = 'YOU GOT OUT'; t.style.color = '#9ecb6a'; document.getElementById('overMsg').innerHTML = 'You spill into the night. She is still in there.'; show('over', true); }
 function die() {
@@ -340,7 +410,7 @@ function jumpscare(done) {
   bindBtn('runBtn', () => running = true, () => running = false);
   bindBtn('flashBtn', () => { if (battery > 0.001) flashOn = !flashOn; });
   bindBtn('actBtn', () => actReq = true, null);
-  document.getElementById('startBtn').addEventListener('click', () => { A.initAudio(); show('title', false); playIntro(); });
+  document.getElementById('startBtn').addEventListener('click', () => { A.initAudio(); show('title', false); startFarm(); });
   document.getElementById('retryBtn').addEventListener('click', () => { A.resumeAudio(); show('over', false); startGame(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) A.suspendAudio(); else if (state === 'play') A.resumeAudio(); });
   requestAnimationFrame(loop);
