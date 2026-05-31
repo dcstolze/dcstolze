@@ -287,6 +287,31 @@ function loop(now) {
 
 /* ---------- flow ---------- */
 function show(id, v) { const e = document.getElementById(id); if (e) e.classList.toggle('hidden', !v); }
+
+/* opening cutscene: you arrive at the farm, then step into the house */
+const INTRO = [
+  "Three weeks since your sister's last call.",
+  "Hollow Farm — the end of the dirt road.",
+  "Every window is black. The front door stands open.",
+  "You step inside…"
+];
+let introI = 0, introBound = false;
+function playIntro() {
+  introI = 0;
+  const el = document.getElementById('intro');
+  document.getElementById('introText').textContent = INTRO[0];
+  const bg = document.getElementById('introBg');
+  if (bg) { bg.style.animation = 'none'; void bg.offsetWidth; bg.style.animation = ''; }
+  el.classList.remove('hidden');
+  if (!introBound) {
+    introBound = true;
+    el.addEventListener('click', () => {
+      introI++;
+      if (introI >= INTRO.length) { el.classList.add('hidden'); startGame(); }
+      else document.getElementById('introText').textContent = INTRO[introI];
+    });
+  }
+}
 function startGame() { A.initAudio(); buildLevel(); state = 'play'; ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true)); last = performance.now(); }
 function hudOff() { ['hud', 'battWrap', 'stamWrap', 'runBtn', 'flashBtn', 'actBtn'].forEach(i => show(i, false)); A.setChaseAudio(0); document.body.classList.remove('shake'); }
 function win() { state = 'over'; hudOff(); A.sfxWin(); const t = document.getElementById('overTitle'); t.textContent = 'YOU GOT OUT'; t.style.color = '#9ecb6a'; document.getElementById('overMsg').innerHTML = 'You spill into the night. She is still in there.'; show('over', true); }
@@ -315,7 +340,7 @@ function jumpscare(done) {
   bindBtn('runBtn', () => running = true, () => running = false);
   bindBtn('flashBtn', () => { if (battery > 0.001) flashOn = !flashOn; });
   bindBtn('actBtn', () => actReq = true, null);
-  document.getElementById('startBtn').addEventListener('click', () => { show('title', false); startGame(); });
+  document.getElementById('startBtn').addEventListener('click', () => { A.initAudio(); show('title', false); playIntro(); });
   document.getElementById('retryBtn').addEventListener('click', () => { A.resumeAudio(); show('over', false); startGame(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) A.suspendAudio(); else if (state === 'play') A.resumeAudio(); });
   requestAnimationFrame(loop);

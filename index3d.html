@@ -31,6 +31,20 @@
   #title h1 { margin-top:auto; }
   #title .btn, #title .tip, #title .credit { }
   #title .sub b { color:#c98; } #title .sub i { color:#9a3030; }
+  /* opening cutscene */
+  #intro { position:fixed; inset:0; z-index:25; display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; text-align:center; padding:0 26px 16vh;
+    background:#000; overflow:hidden; }
+  #introBg { position:absolute; inset:0; background:url('assets/intro/farm.png') center/cover no-repeat;
+    animation:kenburns 16s ease-out forwards; transform-origin:50% 40%; }
+  @keyframes kenburns { from { transform:scale(1.02); } to { transform:scale(1.2); } }
+  #introVeil { position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.9) 100%); }
+  #introText { position:relative; color:#cdc6b4; font-size:clamp(16px,4.6vw,22px); line-height:1.6;
+    text-shadow:0 0 8px #000, 0 1px 2px #000; max-width:560px; min-height:3.4em; }
+  #introTap { position:relative; margin-top:18px; color:#6a6358; font-size:clamp(11px,3vw,13px);
+    letter-spacing:2px; animation:tapblink 1.6s infinite; }
+  @keyframes tapblink { 50% { opacity:0.25; } }
   /* second meter (stamina) sits just above the battery */
   #stamWrap { position:fixed; left:16px; bottom:42px; width:34vw; max-width:170px; height:6px;
     background:rgba(20,16,14,0.6); border:1px solid #3a322a; border-radius:4px; z-index:6; pointer-events:none; }
@@ -81,6 +95,13 @@
       Walk to a dresser and tap SEARCH &nbsp;·&nbsp; headphones on, lights off
     </div>
     <div class="credit">Environment “Abandoned Farm | PSX” by McPato · Sister “Blood Stained Spirit” by adhamAsalah · both CC-BY-4.0</div>
+  </div>
+
+  <div id="intro" class="hidden">
+    <div id="introBg"></div>
+    <div id="introVeil"></div>
+    <p id="introText"></p>
+    <div id="introTap">tap to continue</div>
   </div>
 
   <div id="over" class="scr hidden">
