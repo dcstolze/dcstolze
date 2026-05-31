@@ -1,8 +1,8 @@
 {
   "name": "SISTER — Don't Let Her Find You",
   "short_name": "SISTER",
-  "description": "A PS1/VHS first-person survival horror. Find the keys, escape the house, don't let her find you.",
-  "start_url": "./index3d.html",
+  "description": "A PS1/VHS first-person horror. Explore the abandoned Hollow Farm at night.",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],

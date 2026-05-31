@@ -4,72 +4,91 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SISTER" />
 <meta name="theme-color" content="#000000" />
-<title>SISTER — Don't Let Her Find You</title>
+<title>SISTER — Hollow Farm</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="css/style.css" />
+<style>
+  /* 3D canvas fills the screen, chunky upscale */
+  #game { position:fixed; inset:0; width:100vw; height:100vh; display:block; image-rendering:pixelated; background:#0a0e18; }
+  /* title uses the rendered farm as its backdrop */
+  #title {
+    background:
+      linear-gradient(180deg, rgba(5,6,10,0.45) 0%, rgba(5,6,10,0.74) 60%, rgba(5,6,10,0.92) 100%),
+      url('assets/intro/farm.png') center 32% / cover no-repeat;
+  }
+  #title h1 { margin-top:auto; }
+  #title .sub b { color:#c98; } #title .sub i { color:#9a3030; }
+  /* loading screen */
+  #intro { position:fixed; inset:0; z-index:25; display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; text-align:center; padding:0 26px 16vh;
+    background:#000; overflow:hidden; }
+  #introBg { position:absolute; inset:0; background:url('assets/intro/farm.png') center/cover no-repeat;
+    animation:kenburns 16s ease-out forwards; transform-origin:50% 40%; }
+  @keyframes kenburns { from { transform:scale(1.02); } to { transform:scale(1.2); } }
+  #introVeil { position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.9) 100%); }
+  #introText { position:relative; color:#cdc6b4; font-size:clamp(16px,4.6vw,22px); line-height:1.6;
+    text-shadow:0 0 8px #000, 0 1px 2px #000; max-width:560px; min-height:3.4em; }
+  /* second meter (stamina) sits just above the battery */
+  #stamWrap { position:fixed; left:16px; bottom:42px; width:34vw; max-width:170px; height:6px;
+    background:rgba(20,16,14,0.6); border:1px solid #3a322a; border-radius:4px; z-index:6; pointer-events:none; }
+  #stam { height:100%; width:100%; border-radius:3px; background:linear-gradient(90deg,#5a6a2c,#9ad04a); transition:width .12s; }
+</style>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="vig"></div>
   <div id="redveil"></div>
 
-  <!-- VHS camcorder overlay -->
   <div id="vhs" class="hidden">
     <div id="scan"></div>
     <div id="rec"><span class="dot">●</span> REC&nbsp; <span id="tc">0:00:00</span></div>
     <div id="track"></div>
   </div>
 
-  <!-- HUD -->
   <div id="hud" class="hidden">
-    <div id="obj">FIND THE THREE KEYS</div>
-    <div id="keys"><span class="kslot" data-i="0">✚</span><span class="kslot" data-i="1">✚</span><span class="kslot" data-i="2">✚</span></div>
+    <div id="obj">HOLLOW FARM</div>
     <div id="toast"></div>
   </div>
 
-  <!-- on-screen controls -->
-  <div id="stamWrap" class="hidden"><div id="stam"></div></div>
   <div id="battWrap" class="hidden"><div id="batt"></div></div>
+  <div id="stamWrap" class="hidden"><div id="stam"></div></div>
   <div id="runBtn" class="hidden">RUN</div>
   <div id="flashBtn" class="hidden">LIGHT</div>
-  <div id="hideBtn" class="hidden">HIDE</div>
 
-  <!-- TITLE -->
   <div id="title" class="scr">
     <h1>SISTER</h1>
     <p class="sub">
-      The doors locked behind you. The house is breathing.<br><br>
-      Somewhere in these rooms are <b>three iron keys</b>.<br>
-      Find them. Reach the <b>front door</b>. Get out.<br><br>
-      <i>She is already awake. Don't let her find you.</i>
+      The line went dead three weeks ago. Tonight you finally found the place
+      your sister was last seen — <b>Hollow Farm</b>, rotting at the end of the
+      dirt road.<br><br>
+      <i>Explore it.</i>
     </p>
-    <button class="btn" id="startBtn">GO INSIDE</button>
+    <button class="btn" id="startBtn">ENTER THE FARM</button>
     <div class="tip">
-      LEFT side: drag to move &nbsp;·&nbsp; RIGHT side: drag to look<br>
-      Hold RUN to sprint (but running is loud) &nbsp;·&nbsp; walk into doors to open them<br>
-      The three keys are hidden in drawers — tap SEARCH at a dresser to ransack it<br>
-      Near a wardrobe or bed, tap HIDE to climb in and hold your breath<br>
-      Your flashlight drains — find batteries, or tap LIGHT to save power and go dark<br>
-      headphones on · lights off
+      LEFT half: drag to move &nbsp;·&nbsp; RIGHT half: drag to look<br>
+      Hold RUN to sprint &nbsp;·&nbsp; LIGHT toggles the flashlight<br>
+      headphones on, lights off
     </div>
-    <div class="credit">Sister model: “Horror Ghost Character – Blood Stained Spirit” by adhamAsalah · CC-BY-4.0</div>
+    <div class="credit">Environment “Abandoned Farm | PSX” by McPato · Sister “Blood Stained Spirit” by adhamAsalah · both CC-BY-4.0</div>
   </div>
 
-  <!-- END SCREEN -->
-  <div id="over" class="scr hidden">
-    <h1 id="overTitle">SHE FOUND YOU</h1>
-    <p class="sub" id="overMsg"></p>
-    <button class="btn" id="retryBtn">AGAIN</button>
+  <div id="intro" class="hidden">
+    <div id="introBg"></div>
+    <div id="introVeil"></div>
+    <p id="introText"></p>
   </div>
 
-  <!-- JUMPSCARE -->
-  <div id="jump" class="hidden"><canvas id="jumpCanvas"></canvas></div>
-
-  <script src="js/textures.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/world.js"></script>
-  <script src="js/input.js"></script>
-  <script src="js/game.js"></script>
+  <script type="module" src="js3d/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
 </body>
 </html>

@@ -1,8 +1,9 @@
 /* sw.js — offline service worker for SISTER (3D). Cache-first app shell so the
    game installs as a PWA and runs without a connection after the first load. */
-const CACHE = 'sister-3d-v6';
+const CACHE = 'sister-3d-v7';
 const ASSETS = [
-  './index3d.html',
+  './index.html',
+  './',
   './css/style.css',
   './assets/intro/farm.png',
   './js3d/main.js',
@@ -37,6 +38,6 @@ self.addEventListener('fetch', (e) => {
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match('./index3d.html')))
+    }).catch(() => caches.match('./index.html')))
   );
 });
