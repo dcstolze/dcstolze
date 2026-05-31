@@ -1,0 +1,11 @@
+Model Information:
+* title:	Abandoned Farm | PSX Environment
+* source:	https://sketchfab.com/3d-models/abandoned-farm-psx-environment-ca9cb56f2cf1469abc6fabd44e71c10c
+* author:	McPato (https://sketchfab.com/McPato)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Abandoned Farm | PSX Environment" (https://sketchfab.com/3d-models/abandoned-farm-psx-environment-ca9cb56f2cf1469abc6fabd44e71c10c) by McPato (https://sketchfab.com/McPato) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
