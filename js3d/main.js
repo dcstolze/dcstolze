@@ -7,7 +7,7 @@ import * as F from './farm.js';
 /* ---------- renderer at low internal resolution (PS1 chunk) ---------- */
 const cv = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: false, powerPreference: 'high-performance' });
-renderer.setClearColor(0x0a0e18, 1);
+renderer.setClearColor(0x141d2e, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 let LW = 0, LH = 0;
 function resize() {
@@ -21,12 +21,13 @@ function resize() {
 
 /* ---------- scene ---------- */
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x0a0e18, 0.022);
-const camera = new THREE.PerspectiveCamera(74, 1, 0.05, 300);
-const moon = new THREE.DirectionalLight(0xaec4e8, 0.9); moon.position.set(-8, 14, 6); scene.add(moon);
-const moonFill = new THREE.DirectionalLight(0x4a5a7a, 0.35); moonFill.position.set(6, 8, -4); scene.add(moonFill);
-const amb = new THREE.AmbientLight(0x3a4663, 0.7); scene.add(amb);
-const flash = new THREE.SpotLight(0xffe8c4, 2.6, 24, Math.PI / 5.5, 0.6, 1.3);
+scene.fog = new THREE.FogExp2(0x141d2e, 0.012);
+const camera = new THREE.PerspectiveCamera(74, 1, 0.05, 400);
+// readable moonlit night (balanced so textured surfaces aren't blown out)
+const moon = new THREE.DirectionalLight(0xb9c6e4, 0.95); moon.position.set(-10, 18, 8); scene.add(moon);
+const moonFill = new THREE.DirectionalLight(0x6a79a0, 0.4); moonFill.position.set(8, 10, -6); scene.add(moonFill);
+const amb = new THREE.HemisphereLight(0x8390b4, 0x26281f, 0.7); scene.add(amb);
+const flash = new THREE.SpotLight(0xffe8c4, 3.2, 28, Math.PI / 5, 0.5, 1.2);
 const flashTarget = new THREE.Object3D();
 scene.add(flash, flashTarget); flash.target = flashTarget;
 
@@ -78,11 +79,11 @@ function updateFarm(dt) {
   }
   if (flashOn) battery = Math.max(0, battery - dt / 120);
   if (battery <= 0) flashOn = false;
-  let fi = flashOn ? 2.6 : 0.0; if (fi > 0) fi *= 0.92 + Math.random() * 0.16;
+  let fi = flashOn ? 3.2 : 0.0; if (fi > 0) fi *= 0.94 + Math.random() * 0.12;
   flash.intensity = fi;
 
   const bob = moving ? Math.sin(walkPhase) * 0.05 : 0;
-  const camY = F.farm.eye + bob;
+  const camY = F.eyeY(player) + bob;
   camera.position.set(player.x, camY, player.z);
   const dirX = -Math.sin(player.yaw) * Math.cos(player.pitch), dirY = Math.sin(player.pitch), dirZ = -Math.cos(player.yaw) * Math.cos(player.pitch);
   camera.lookAt(player.x + dirX, camY + dirY, player.z + dirZ);
