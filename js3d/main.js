@@ -174,16 +174,10 @@ function updateFarm(dt) {
   flash.position.copy(camera.position);
   flashTarget.position.set(player.x + dirX * 6, camY + dirY * 6, player.z + dirZ * 6);
 
-  F.tickMarker(playTime);
-  const d = F.distToHouse(player);
-  const ab = document.getElementById('actBtn');
-  const atDoor = d < F.farm.enterDist;
-  ab.classList.toggle('hidden', !atDoor);
-  ab.textContent = 'GO IN';
-  if (!farmPrompted && d < F.farm.radius * 0.55) { farmPrompted = true; toast('The farmhouse door hangs open ahead.'); }
-  if (atDoor && actReq) { actReq = false; enterHouse(); return; }
-  if (atDoor) document.getElementById('obj').textContent = 'TAP "GO IN" TO ENTER';
-  else document.getElementById('obj').textContent = 'REACH THE FARMHOUSE';
+  // farm is the whole game: free roam, no house/objective
+  document.getElementById('actBtn').classList.add('hidden');
+  actReq = false;
+  document.getElementById('obj').textContent = 'HOLLOW FARM';
 
   glitchT -= dt; if (glitchT <= 0) { vhsGlitch(); glitchT = 5 + Math.random() * 4; }
   toastT -= dt; if (toastT <= 0) document.getElementById('toast').classList.remove('show');
@@ -352,7 +346,6 @@ async function startFarm() {
   document.getElementById('introText').textContent = 'Arriving at Hollow Farm…';
   document.getElementById('intro').classList.remove('hidden');
   // ensure the house grid is hidden while outdoors
-  world.visible = false; if (enemy.spr) enemy.spr.visible = false;
   try {
     if (!farmLoaded) {
       await F.loadFarm(scene, (p) => { document.getElementById('introText').textContent = 'Arriving at Hollow Farm… ' + Math.round(p * 100) + '%'; });
@@ -360,29 +353,17 @@ async function startFarm() {
     }
     F.farm.group.visible = true;
   } catch (e) {
-    // if the model fails, don't strand the player — go straight inside
-    document.getElementById('intro').classList.add('hidden');
-    return startGame();
+    document.getElementById('introText').textContent = 'Failed to load the farm. Reload to retry.';
+    return;
   }
-  // outdoor lighting on, indoor flashlight available
   moon.intensity = 0.9; farmAmb.intensity = 0.7; scene.fog = new THREE.FogExp2(0x0a0e18, 0.022);
-  keysHave = 0; battery = 1; flashOn = true; stamina = 1; hidden = false; playTime = 0; farmPrompted = false;
+  battery = 1; flashOn = true; stamina = 1; playTime = 0;
   F.spawn(player);
   state = 'farm';
   ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true));
   document.getElementById('intro').classList.add('hidden');
   last = performance.now();
 }
-
-function enterHouse() {
-  toast('You step through the doorway.'); A.sfxDoor();
-  if (F.farm.group) F.farm.group.visible = false;
-  moon.intensity = 0; farmAmb.intensity = 0; scene.fog = new THREE.FogExp2(0x05060a, 0.11);
-  world.visible = true;
-  startGame();
-}
-
-function startGame() { A.initAudio(); buildLevel(); if (enemy.spr) enemy.spr.visible = true; state = 'play'; ['hud', 'battWrap', 'stamWrap', 'vhs', 'runBtn', 'flashBtn'].forEach(i => show(i, true)); last = performance.now(); }
 function hudOff() { ['hud', 'battWrap', 'stamWrap', 'runBtn', 'flashBtn', 'actBtn'].forEach(i => show(i, false)); A.setChaseAudio(0); document.body.classList.remove('shake'); }
 function win() { state = 'over'; hudOff(); A.sfxWin(); const t = document.getElementById('overTitle'); t.textContent = 'YOU GOT OUT'; t.style.color = '#9ecb6a'; document.getElementById('overMsg').innerHTML = 'You spill into the night. She is still in there.'; show('over', true); }
 function die() {
@@ -411,7 +392,7 @@ function jumpscare(done) {
   bindBtn('flashBtn', () => { if (battery > 0.001) flashOn = !flashOn; });
   bindBtn('actBtn', () => actReq = true, null);
   document.getElementById('startBtn').addEventListener('click', () => { A.initAudio(); show('title', false); startFarm(); });
-  document.getElementById('retryBtn').addEventListener('click', () => { A.resumeAudio(); show('over', false); startGame(); });
+  document.getElementById('retryBtn').addEventListener('click', () => { A.resumeAudio(); show('over', false); startFarm(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) A.suspendAudio(); else if (state === 'play') A.resumeAudio(); });
   requestAnimationFrame(loop);
 })();

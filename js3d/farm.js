@@ -1,6 +1,5 @@
-// farm.js — the walkable abandoned farm you spawn into before the house.
-// Loads the optimized GLTF, drops it on the ground, and exposes simple
-// flat-ground movement + a glowing porch marker that leads into the house.
+// farm.js — the abandoned farm: the whole playable world. Loads the full-res
+// GLTF, sits it on the ground, and exposes flat-ground free-roam movement.
 import * as THREE from '../assets/vendor/three.module.js';
 import { GLTFLoader } from '../assets/vendor/GLTFLoader.js';
 
@@ -9,9 +8,6 @@ export const farm = {
   ready: false,
   radius: 30,        // walkable bound (set after model fits)
   eye: 1.6,
-  house: { x: 0, z: 0 },   // porch trigger (model units, after fit)
-  enterDist: 3.2,
-  _marker: null,
 };
 
 // Fit the model: center on origin, base at y=0, scale to a target footprint.
@@ -70,23 +66,8 @@ export function loadFarm(scene, onProgress) {
         );
         ground.rotation.x = -Math.PI / 2; ground.position.y = 0.01; g.add(ground);
 
-        farm.radius = span * 0.46;
-
-        // pick the porch: a point near the model centre, pulled toward the
-        // player's spawn edge so it's reachable and visible on arrival.
-        farm.house = { x: 0, z: -span * 0.10 };
-
-        // glowing doorway marker so the objective is unmistakable
-        const mk = new THREE.Group();
-        const glow = new THREE.PointLight(0xffd27a, 6, 16, 2); glow.position.set(0, 2.0, 0); mk.add(glow);
-        const door = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.5, 3.0),
-          new THREE.MeshBasicMaterial({ color: 0xffca6a, transparent: true, opacity: 0.55, fog: false, side: THREE.DoubleSide })
-        );
-        door.position.set(0, 1.5, 0); mk.add(door);
-        mk.position.set(farm.house.x, 0, farm.house.z);
-        farm._marker = { group: mk, door, glow };
-        g.add(mk);
+        farm.radius = span * 0.48;
+        farm.center = { x: 0, z: 0 };
 
         scene.add(g);
         farm.group = g; farm.ready = true;
@@ -98,36 +79,25 @@ export function loadFarm(scene, onProgress) {
   });
 }
 
-// Player spawn: at the near edge, looking toward the porch marker.
+// Player spawn: at the near edge, looking in toward the farm.
 export function spawn(player) {
-  player.x = farm.house.x;
-  player.z = farm.house.z + farm.radius * 0.82;
-  player.yaw = 0;            // faces -Z, toward the house
-  player.pitch = -0.05;
+  player.x = 0;
+  player.z = farm.radius * 0.82;
+  player.yaw = 0;            // faces -Z, into the farm
+  player.pitch = -0.02;
 }
 
 // Flat-ground move clamped to the walkable circle (no mesh collision —
-// the farm is an atmospheric approach, kept robust so you never get stuck).
+// free roam, kept robust so you never get stuck).
 export function moveFarm(player, nx, nz) {
-  const cx = farm.house.x, cz = farm.house.z;
+  const cx = 0, cz = 0;
   const dx = nx - cx, dz = nz - cz;
   const d = Math.hypot(dx, dz);
   if (d > farm.radius) { const k = farm.radius / d; player.x = cx + dx * k; player.z = cz + dz * k; }
   else { player.x = nx; player.z = nz; }
 }
 
-export function distToHouse(player) {
-  return Math.hypot(player.x - farm.house.x, player.z - farm.house.z);
-}
-
-// pulse the porch glow
-export function tickMarker(t) {
-  if (!farm._marker) return;
-  farm._marker.glow.intensity = 5 + Math.sin(t * 3) * 1.6;
-  farm._marker.door.material.opacity = 0.45 + Math.sin(t * 3) * 0.12;
-}
-
 export function dispose(scene) {
   if (farm.group) { scene.remove(farm.group); }
-  farm.group = null; farm.ready = false; farm._marker = null;
+  farm.group = null; farm.ready = false;
 }
