@@ -27,6 +27,18 @@ ships in `horror_ghost_character_-_blood_stained_spirit.zip`.
 > by adhamasalah (https://sketchfab.com/adhamAsalah)
 > licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
 
+## Environment (story intro) — `assets/intro/farm.png`
+The opening backdrop is rendered from the **"Abandoned Farm | PSX Environment"**
+glTF (source files in the repo root: `scene.gltf` + `scene.bin` + textures),
+rendered to a moody night establishing shot here with three.js + headless-gl.
+
+**License: CC-BY-4.0 — attribution required. Required credit:**
+
+> This work is based on "Abandoned Farm | PSX Environment"
+> (https://sketchfab.com/3d-models/abandoned-farm-psx-environment-ca9cb56f2cf1469abc6fabd44e71c10c)
+> by McPato (https://sketchfab.com/McPato)
+> licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+
 ## Build-time tooling (not shipped)
 `three`, `three-stdlib`, `gl` (headless-gl), `canvas`, `jsdom` are dev-only
 dependencies used to render the model and generate screenshots. They are listed

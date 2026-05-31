@@ -22,6 +22,15 @@
     font-size:clamp(14px,4vw,18px); letter-spacing:3px; z-index:7; box-shadow:0 0 18px rgba(150,130,0,0.25);
   }
   #actBtn:active { transform:translateX(-50%) scale(0.95); }
+  /* story intro uses the rendered farm as its backdrop */
+  #title {
+    background:
+      linear-gradient(180deg, rgba(5,6,10,0.45) 0%, rgba(5,6,10,0.74) 60%, rgba(5,6,10,0.92) 100%),
+      url('assets/intro/farm.png') center 32% / cover no-repeat;
+  }
+  #title h1 { margin-top:auto; }
+  #title .btn, #title .tip, #title .credit { }
+  #title .sub b { color:#c98; } #title .sub i { color:#9a3030; }
   /* second meter (stamina) sits just above the battery */
   #stamWrap { position:fixed; left:16px; bottom:42px; width:34vw; max-width:170px; height:6px;
     background:rgba(20,16,14,0.6); border:1px solid #3a322a; border-radius:4px; z-index:6; pointer-events:none; }
@@ -59,9 +68,11 @@
   <div id="title" class="scr">
     <h1>SISTER</h1>
     <p class="sub">
-      You are locked inside the house. Three iron keys are hidden in the
-      drawers. Find them, reach the <b>front door</b>, and get out.<br><br>
-      <i>She is already awake.</i>
+      The line went dead three weeks ago. Tonight you finally found the place
+      your sister was last seen — <b>Hollow Farm</b>, rotting at the end of the
+      dirt road.<br><br>
+      The farmhouse door is already open.<br>
+      <i>Something inside is waiting.</i>
     </p>
     <button class="btn" id="startBtn">GO INSIDE</button>
     <div class="tip">
@@ -69,7 +80,7 @@
       Hold RUN to sprint &nbsp;·&nbsp; LIGHT toggles the flashlight<br>
       Walk to a dresser and tap SEARCH &nbsp;·&nbsp; headphones on, lights off
     </div>
-    <div class="credit">Sister model: “Horror Ghost Character – Blood Stained Spirit” by adhamAsalah · CC-BY-4.0</div>
+    <div class="credit">Environment “Abandoned Farm | PSX” by McPato · Sister “Blood Stained Spirit” by adhamAsalah · both CC-BY-4.0</div>
   </div>
 
   <div id="over" class="scr hidden">
